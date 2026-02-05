@@ -4,9 +4,8 @@ export default async function handler(req, res) {
     const { message } = req.body;
     const API_KEY = process.env.OPENROUTER_API_KEY;
 
-    // Check if key exists
     if (!API_KEY) {
-        return res.status(500).json({ reply: "Error: OPENROUTER_API_KEY is missing in Vercel Settings." });
+        return res.status(500).json({ reply: "Error: API Key missing in Vercel settings." });
     }
 
     try {
@@ -14,27 +13,28 @@ export default async function handler(req, res) {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${API_KEY}`,
-                "HTTP-Referer": "https://super-ai-app.vercel.app", // Required by some free models
-                "X-Title": "super_AI", // Required by some free models
+                "HTTP-Referer": "https://super-ai-app.vercel.app", // Change to your site URL if you have one
+                "X-Title": "super_AI",
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                "model": "google/gemini-2.0-flash-lite-preview-02-05:free",
+                // RECOMMENDED: This automatically finds the best currently working free model
+                "model": "openrouter/free", 
                 "messages": [{ "role": "user", "content": message }]
             })
         });
 
         const data = await response.json();
 
+        // If OpenRouter returns an error object, show it
         if (data.error) {
-            // This will show you exactly what OpenRouter is complaining about
-            return res.status(200).json({ reply: `OpenRouter Error: ${data.error.message}` });
+            return res.status(200).json({ reply: `AI Error: ${data.error.message}` });
         }
 
-        const reply = data.choices?.[0]?.message?.content || "AI returned empty response.";
+        const reply = data.choices?.[0]?.message?.content || "AI is currently busy. Try again in a moment.";
         res.status(200).json({ reply });
 
     } catch (error) {
-        res.status(500).json({ reply: "Connection Error: Check Vercel logs or your internet." });
+        res.status(500).json({ reply: "System Error: Could not connect to the AI server." });
     }
 }
