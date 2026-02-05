@@ -2,22 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>super_AI</title>
+    <meta name="theme-color" content="#0f172a">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0b0e14">
-    <!-- Fonts & Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Icons & Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Markdown Parser -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
+
     <style>
         :root {
-            --bg: #0b0e14;
-            --card: #1c2128;
-            --primary: #2563eb;
-            --text: #e6edf3;
-            --text-dim: #8b949e;
+            --bg: #0f172a;
+            --header-bg: rgba(15, 23, 42, 0.95);
+            --card: #1e293b;
+            --primary: #3b82f6;
+            --primary-grad: linear-gradient(135deg, #3b82f6, #2563eb);
+            --text: #f1f5f9;
+            --text-dim: #94a3b8;
+            --border: #334155;
+            --incoming-bg: #1e293b;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            --danger: #ef4444;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -25,275 +33,454 @@
         body {
             background: var(--bg);
             color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            font-family: 'Inter', -apple-system, sans-serif;
             height: 100dvh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        /* Splash Screen */
+        /* --- Animations --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        /* --- Splash Screen --- */
         #splash {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            transition: opacity 0.6s ease;
+            position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s ease;
         }
+        .logo-img { width: 80px; filter: drop-shadow(0 0 20px rgba(59,130,246,0.5)); margin-bottom: 20px; }
 
-        .logo-bounce {
-            width: 80px;
-            filter: drop-shadow(0 0 15px var(--primary));
-            animation: bounce 2s infinite ease-in-out;
-        }
-
-        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-
-        /* Header */
+        /* --- Header --- */
         header {
             padding: 15px 20px;
-            background: var(--card);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #30363d;
-            z-index: 10;
+            padding-top: calc(15px + env(safe-area-inset-top));
+            background: var(--header-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100;
         }
-
-        #install-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            display: none;
-            cursor: pointer;
+        
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; }
+        .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
+        
+        .header-actions button {
+            background: transparent; border: none; color: var(--text-dim);
+            font-size: 1.2rem; padding: 8px; cursor: pointer; transition: color 0.3s;
         }
+        .header-actions button:hover { color: var(--primary); }
 
-        @media all and (display-mode: standalone) {
-            #install-btn { display: none !important; }
-            header { padding-top: env(safe-area-inset-top); }
-        }
-
-        /* Chat Area */
+        /* --- Chat Area --- */
         #chat-box {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+            flex: 1; overflow-y: auto; padding: 20px;
+            display: flex; flex-direction: column; gap: 18px;
             scroll-behavior: smooth;
         }
 
         .msg {
-            max-width: 85%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 15px;
-            line-height: 1.6;
-            animation: fadeInUp 0.3s ease-out forwards;
+            max-width: 85%; padding: 14px 18px; border-radius: 20px;
+            font-size: 15px; line-height: 1.6; position: relative;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.3s ease-out forwards;
+            word-wrap: break-word;
         }
-
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .user-msg {
             align-self: flex-end;
-            background: var(--primary);
+            background: var(--primary-grad);
             color: white;
-            border-bottom-right-radius: 2px;
+            border-bottom-right-radius: 4px;
         }
 
         .ai-msg {
             align-self: flex-start;
-            background: var(--card);
-            border: 1px solid #30363d;
-            border-bottom-left-radius: 2px;
+            background: var(--incoming-bg);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
         }
 
-        /* Markdown Specific Styling */
-        .ai-msg p { margin-bottom: 8px; }
-        .ai-msg p:last-child { margin-bottom: 0; }
+        /* Markdown Styles */
+        .ai-msg pre { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; overflow-x: auto; margin: 10px 0; }
+        .ai-msg code { font-family: monospace; font-size: 0.9em; background: rgba(255,255,255,0.1); padding: 2px 5px; border-radius: 4px; }
+        .ai-msg p { margin-bottom: 8px; } .ai-msg p:last-child { margin-bottom: 0; }
         .ai-msg strong { color: #fff; font-weight: 700; }
-        .ai-msg ul, .ai-msg ol { margin-left: 20px; margin-bottom: 8px; }
-        .ai-msg li { margin-bottom: 4px; }
-        .ai-msg code { background: rgba(255,255,255,0.1); padding: 2px 5px; border-radius: 4px; font-family: monospace; }
 
-        /* Input Area */
+        /* --- Typing Indicator --- */
+        .typing { display: flex; gap: 5px; padding: 15px 20px; width: fit-content; }
+        .dot { width: 6px; height: 6px; background: var(--text-dim); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        /* --- Input Area --- */
         .input-area {
-            padding: 15px 20px;
             background: var(--card);
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            padding: 15px;
             padding-bottom: calc(15px + env(safe-area-inset-bottom));
-            border-top: 1px solid #30363d;
+            border-top: 1px solid var(--border);
+            display: flex; gap: 10px; align-items: center;
         }
+
+        .input-wrapper { flex: 1; position: relative; display: flex; align-items: center; }
 
         input {
-            flex: 1;
-            background: #0d1117;
-            border: 1px solid #30363d;
-            padding: 12px 20px;
-            border-radius: 25px;
-            color: white;
-            outline: none;
-            font-size: 16px;
+            width: 100%; background: var(--bg); border: 1px solid var(--border);
+            padding: 14px 20px; border-radius: 25px; color: var(--text);
+            font-size: 16px; outline: none; transition: border-color 0.3s;
         }
-
         input:focus { border-color: var(--primary); }
 
-        button#send-btn {
-            background: var(--primary);
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            color: white;
-            cursor: pointer;
+        #send-btn {
+            background: var(--primary); color: white; border: none;
+            width: 48px; height: 48px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4);
             transition: transform 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        }
+        #send-btn:active { transform: scale(0.9); }
+
+        /* --- Settings Modal --- */
+        #settings-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px); z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #settings-modal.active { opacity: 1; pointer-events: all; }
+
+        .modal-card {
+            background: var(--card); width: 90%; max-width: 400px;
+            padding: 25px; border-radius: 20px; border: 1px solid var(--border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transform: translateY(20px); transition: transform 0.3s;
+        }
+        #settings-modal.active .modal-card { transform: translateY(0); }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h3 { font-size: 1.2rem; font-weight: 600; }
+        .close-btn { background: none; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer; }
+
+        .setting-item { margin-bottom: 20px; }
+        .setting-item label { display: block; font-size: 0.9rem; color: var(--text-dim); margin-bottom: 8px; }
+        
+        textarea#custom-prompt {
+            width: 100%; height: 100px; background: var(--bg);
+            border: 1px solid var(--border); border-radius: 12px;
+            padding: 12px; color: var(--text); font-family: inherit; font-size: 14px;
+            resize: none; outline: none;
+        }
+        textarea#custom-prompt:focus { border-color: var(--primary); }
+
+        .btn-full {
+            width: 100%; padding: 12px; border-radius: 12px;
+            border: none; font-weight: 600; cursor: pointer;
+            margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+
+        /* --- Toast Notification --- */
+        #toast {
+            position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); color: white; padding: 8px 16px;
+            border-radius: 20px; font-size: 14px; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s; z-index: 500; backdrop-filter: blur(4px);
         }
 
-        button#send-btn:active { transform: scale(0.9); }
-
+        /* --- Offline Banner --- */
         #offline-status {
-            background: #ef4444;
-            color: white;
-            text-align: center;
-            font-size: 12px;
-            padding: 4px;
-            display: none;
+            background: var(--danger); color: white; text-align: center;
+            font-size: 12px; padding: 6px; display: none;
         }
     </style>
 </head>
 <body>
 
-    <div id="offline-status">No internet connection.</div>
+<!-- Offline Indicator -->
+<div id="offline-status"><i class="fas fa-wifi"></i> No Internet Connection</div>
 
-    <div id="splash">
-        <img src="https://cdn-icons-png.flaticon.com/512/1698/1698535.png" class="logo-bounce">
-        <h1 style="margin-top: 20px; font-weight: 800; letter-spacing: 1px;">super_AI</h1>
-    </div>
+<!-- Splash Screen -->
+<div id="splash">
+    <img src="https://cdn-icons-png.flaticon.com/512/1698/1698535.png" class="logo-img">
+    <h1 style="font-weight: 800; letter-spacing: 1px;">super_AI</h1>
+</div>
 
-    <header>
-        <div>
-            <h2 style="font-size: 1.1rem; font-weight: 700;">super_AI</h2>
-            <div style="display: flex; align-items: center; gap: 5px;">
-                <span style="width: 8px; height: 8px; background: #238636; border-radius: 50%;"></span>
-                <span style="font-size: 0.75rem; color: var(--text-dim);">Online</span>
-            </div>
+<!-- Toast -->
+<div id="toast">Copied</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Settings</h3>
+            <button class="close-btn" id="close-settings"><i class="fas fa-times"></i></button>
         </div>
-        <button id="install-btn">Install App</button>
-    </header>
+        
+        <!-- Custom Prompt -->
+        <div class="setting-item">
+            <label for="custom-prompt">Custom System Prompt</label>
+            <textarea id="custom-prompt" placeholder="e.g., You are a strict math tutor."></textarea>
+        </div>
+        <button id="save-prompt-btn" class="btn-full btn-primary">Save Prompt</button>
+        
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
 
-    <div id="chat-box">
-        <!-- Initial Message is manually rendered as HTML -->
-        <div class="msg ai-msg">Hello! I am <b>super_AI</b>. How can I assist you today?</div>
+        <!-- Install Button (Hidden by default) -->
+        <button id="install-btn" class="btn-full btn-outline" style="display:none">
+            <i class="fas fa-download"></i> Install App
+        </button>
+
+        <!-- Clear History -->
+        <button id="clear-btn" class="btn-full btn-danger">
+            <i class="fas fa-trash-alt"></i> Clear Chat History
+        </button>
     </div>
+</div>
 
-    <div class="input-area">
-        <input type="text" id="user-input" placeholder="Ask me anything..." autocomplete="off">
-        <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+<!-- Header -->
+<header>
+    <div class="brand">
+        <div class="status-dot"></div>
+        <h2>super_AI</h2>
     </div>
+    <div class="header-actions">
+        <button id="open-settings" title="Settings"><i class="fas fa-cog"></i></button>
+    </div>
+</header>
 
-    <script>
+<!-- Chat Container -->
+<div id="chat-box"></div>
+
+<!-- Input Area -->
+<div class="input-area">
+    <div class="input-wrapper">
+        <input type="text" id="user-input" placeholder="Type a message..." autocomplete="off">
+    </div>
+    <button id="send-btn"><i class="fas fa-paper-plane"></i></button>
+</div>
+
+<script>
+    // --- Configuration ---
+    const CONFIG = {
+        apiEndpoint: '/api/chat', 
+        historyKey: 'super_ai_history',
+        promptKey: 'super_ai_system_prompt'
+    };
+
+    // --- DOM Elements ---
+    const chatBox = document.getElementById('chat-box');
+    const input = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const splash = document.getElementById('splash');
+    const toast = document.getElementById('toast');
+    
+    // Settings Elements
+    const settingsModal = document.getElementById('settings-modal');
+    const openSettingsBtn = document.getElementById('open-settings');
+    const closeSettingsBtn = document.getElementById('close-settings');
+    const customPromptInput = document.getElementById('custom-prompt');
+    const savePromptBtn = document.getElementById('save-prompt-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const installBtn = document.getElementById('install-btn');
+
+    // --- State Management ---
+    let chatHistory = [];
+    let systemPrompt = '';
+
+    // --- Initialization ---
+    window.addEventListener('load', () => {
+        // Load Data
+        loadHistory();
+        loadSystemPrompt();
+
         // Remove Splash
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const s = document.getElementById('splash');
-                s.style.opacity = '0';
-                setTimeout(() => s.remove(), 600);
-            }, 1500);
-        });
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            setTimeout(() => splash.remove(), 500);
+        }, 1200);
 
-        const chatBox = document.getElementById('chat-box');
-        const input = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
+        // Mobile Height Fix
+        const setVh = () => {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        };
+        window.addEventListener('resize', setVh);
+        setVh();
+    });
 
-        // Configure Marked to be safe
-        marked.setOptions({
-            breaks: true,
-            gfm: true
-        });
+    marked.setOptions({ breaks: true, gfm: true });
 
-        async function handleSend() {
-            const text = input.value.trim();
-            if (!text) return;
+    // --- Settings Logic ---
+    function loadSystemPrompt() {
+        const stored = localStorage.getItem(CONFIG.promptKey);
+        if (stored) {
+            systemPrompt = stored;
+            customPromptInput.value = stored;
+        }
+    }
 
-            // User Message (Plain text)
-            addMsg(text, 'user-msg', false);
-            input.value = '';
+    openSettingsBtn.addEventListener('click', () => {
+        settingsModal.classList.add('active');
+        customPromptInput.value = systemPrompt; // Refresh input value
+    });
 
-            // AI Loading
-            const loadingId = 'ai-' + Date.now();
-            addMsg('<i class="fas fa-circle-notch fa-spin"></i> thinking...', 'ai-msg', false, loadingId);
+    closeSettingsBtn.addEventListener('click', () => {
+        settingsModal.classList.remove('active');
+    });
 
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text })
-                });
+    // Close modal if clicking outside card
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) settingsModal.classList.remove('active');
+    });
 
-                const data = await response.json();
-                
-                // Convert AI Markdown to HTML using Marked.js
-                const formattedReply = marked.parse(data.reply || "No response received.");
-                document.getElementById(loadingId).innerHTML = formattedReply;
+    savePromptBtn.addEventListener('click', () => {
+        systemPrompt = customPromptInput.value.trim();
+        localStorage.setItem(CONFIG.promptKey, systemPrompt);
+        showToast("Settings Saved");
+        settingsModal.classList.remove('active');
+    });
 
-            } catch (err) {
-                document.getElementById(loadingId).innerHTML = "Error connecting to server.";
-            }
-            chatBox.scrollTop = chatBox.scrollHeight;
+    // --- Chat Logic ---
+    function loadHistory() {
+        const stored = localStorage.getItem(CONFIG.historyKey);
+        if (stored) {
+            chatHistory = JSON.parse(stored);
+            chatHistory.forEach(msg => renderMessage(msg.text, msg.sender, false));
+        } else {
+            addMessageToState("Hello! I am super_AI. How can I help you?", 'ai');
+        }
+        scrollToBottom();
+    }
+
+    function addMessageToState(text, sender) {
+        chatHistory.push({ text, sender });
+        localStorage.setItem(CONFIG.historyKey, JSON.stringify(chatHistory));
+        renderMessage(text, sender, true);
+    }
+
+    function renderMessage(text, sender, isNew) {
+        const div = document.createElement('div');
+        div.className = `msg ${sender === 'user' ? 'user-msg' : 'ai-msg'}`;
+        div.addEventListener('dblclick', () => copyToClipboard(text)); 
+
+        if (sender === 'ai') {
+            div.innerHTML = marked.parse(text);
+        } else {
+            div.textContent = text;
         }
 
-        function addMsg(content, className, isMarkdown, id = '') {
-            const div = document.createElement('div');
-            div.className = `msg ${className}`;
-            if (id) div.id = id;
-            
-            // If it's user text, keep it simple. If it's AI, parse it.
-            div.innerHTML = isMarkdown ? marked.parse(content) : content;
-            
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
+        chatBox.appendChild(div);
+        if (isNew) scrollToBottom();
+    }
+
+    function showTyping() {
+        const div = document.createElement('div');
+        div.className = 'msg ai-msg typing';
+        div.id = 'typing-indicator';
+        div.innerHTML = `<div class="dot"></div><div class="dot"></div><div class="dot"></div>`;
+        chatBox.appendChild(div);
+        scrollToBottom();
+    }
+
+    function removeTyping() {
+        const el = document.getElementById('typing-indicator');
+        if (el) el.remove();
+    }
+
+    function scrollToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function copyToClipboard(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast("Copied");
+        } catch (err) { console.error(err); }
+    }
+
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.style.opacity = '1';
+        setTimeout(() => toast.style.opacity = '0', 2000);
+    }
+
+    // --- Send Logic ---
+    async function handleSend() {
+        const text = input.value.trim();
+        if (!text) return;
+
+        input.value = '';
+        input.blur();
+        addMessageToState(text, 'user');
+        showTyping();
+
+        try {
+            const payload = {
+                message: text,
+                systemPrompt: systemPrompt // Include custom instruction
+            };
+
+            const response = await fetch(CONFIG.apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error("Server Error");
+
+            const data = await response.json();
+            removeTyping();
+            addMessageToState(data.reply, 'ai');
+
+        } catch (err) {
+            removeTyping();
+            let errorMsg = "Connection error. Please try again.";
+            if (!navigator.onLine) errorMsg = "You are currently offline.";
+            addMessageToState(errorMsg, 'ai');
         }
+    }
 
-        sendBtn.addEventListener('click', handleSend);
-        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
-
-        // PWA Install Logic
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('install-btn').style.display = 'block';
-        });
-
-        document.getElementById('install-btn').addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt = null;
-                document.getElementById('install-btn').style.display = 'none';
-            }
-        });
-
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+    clearBtn.addEventListener('click', () => {
+        if(confirm("Delete all chat history?")) {
+            localStorage.removeItem(CONFIG.historyKey);
+            chatHistory = [];
+            chatBox.innerHTML = '';
+            addMessageToState("History cleared.", 'ai');
+            settingsModal.classList.remove('active');
         }
+    });
 
-        // Connection Monitor
-        window.addEventListener('offline', () => document.getElementById('offline-status').style.display = 'block');
-        window.addEventListener('online', () => document.getElementById('offline-status').style.display = 'none');
-    </script>
+    sendBtn.addEventListener('click', handleSend);
+    input.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
+
+    // --- Connectivity ---
+    window.addEventListener('offline', () => document.getElementById('offline-status').style.display = 'block');
+    window.addEventListener('online', () => document.getElementById('offline-status').style.display = 'none');
+
+    // --- PWA Install Logic ---
+    let deferredPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'flex'; // Show button in settings
+    });
+
+    installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt = null;
+            installBtn.style.display = 'none';
+            settingsModal.classList.remove('active');
+        }
+    });
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(console.error);
+    }
+</script>
 </body>
 </html>
