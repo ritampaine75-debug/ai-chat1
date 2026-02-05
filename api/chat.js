@@ -1,0 +1,26 @@
+export default async function handler(req, res) {
+    if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+
+    const { message } = req.body;
+    const API_KEY = process.env.OPENROUTER_API_KEY; // Securely read from Vercel
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": "google/gemini-2.0-flash-lite-preview-02-05:free", // Free model
+                "messages": [{ "role": "user", "content": message }]
+            })
+        });
+
+        const data = await response.json();
+        const reply = data.choices[0].message.content;
+        res.status(200).json({ reply });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch from AI" });
+    }
+}
