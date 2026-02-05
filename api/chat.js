@@ -4,8 +4,9 @@ export default async function handler(req, res) {
     const { message } = req.body;
     const API_KEY = process.env.OPENROUTER_API_KEY;
 
+    // Check if key exists
     if (!API_KEY) {
-        return res.status(500).json({ reply: "Missing API Key in Vercel settings." });
+        return res.status(500).json({ reply: "Error: OPENROUTER_API_KEY is missing in Vercel Settings." });
     }
 
     try {
@@ -13,7 +14,8 @@ export default async function handler(req, res) {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${API_KEY}`,
-                "HTTP-Referer": "https://super-ai-app.vercel.app", 
+                "HTTP-Referer": "https://super-ai-app.vercel.app", // Required by some free models
+                "X-Title": "super_AI", // Required by some free models
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
@@ -23,9 +25,16 @@ export default async function handler(req, res) {
         });
 
         const data = await response.json();
-        const reply = data.choices[0]?.message?.content || "AI returned an empty response.";
+
+        if (data.error) {
+            // This will show you exactly what OpenRouter is complaining about
+            return res.status(200).json({ reply: `OpenRouter Error: ${data.error.message}` });
+        }
+
+        const reply = data.choices?.[0]?.message?.content || "AI returned empty response.";
         res.status(200).json({ reply });
+
     } catch (error) {
-        res.status(500).json({ reply: "Backend error: Could not reach OpenRouter." });
+        res.status(500).json({ reply: "Connection Error: Check Vercel logs or your internet." });
     }
 }
