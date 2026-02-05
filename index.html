@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>super_AI | Premium Chat</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --primary: #3b82f6;
+            --text: #f8fafc;
+            --accent: #6366f1;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Splash Screen */
+        #splash {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease-out, transform 0.8s ease;
+        }
+
+        .logo-anim {
+            width: 120px;
+            animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* Layout */
+        header {
+            padding: 20px;
+            background: var(--surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            animation: slideDown 0.6s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            max-width: 85%;
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.5;
+            animation: messageSlide 0.4s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes messageSlide {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .user { background: var(--primary); align-self: flex-end; margin-left: auto; border-bottom-right-radius: 4px; }
+        .ai { background: var(--surface); align-self: flex-start; border-bottom-left-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
+
+        /* Input Area */
+        .input-wrapper {
+            padding: 20px;
+            background: var(--surface);
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        input {
+            flex: 1;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 18px;
+            border-radius: 30px;
+            color: white;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        input:focus { border-color: var(--primary); }
+
+        button#send {
+            background: var(--primary);
+            border: none;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button#send:active { transform: scale(0.9); }
+
+        /* PWA Install Button Logic */
+        #install-btn {
+            display: none; /* Hidden by default, shown by JS */
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* HIDE INSTALL BUTTON IN STANDALONE MODE (APP MODE) */
+        @media all and (display-mode: standalone) {
+            #install-btn { display: none !important; }
+            header { padding-top: env(safe-area-inset-top); }
+        }
+
+        /* Offline UI */
+        #offline-indicator {
+            position: fixed;
+            top: 0; width: 100%;
+            background: #ef4444;
+            text-align: center;
+            font-size: 12px;
+            padding: 2px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="offline-indicator">You are currently offline. Using cached data.</div>
+
+    <div id="splash">
+        <img src="https://cdn-icons-png.flaticon.com/512/1698/1698535.png" class="logo-anim" alt="Logo">
+        <h2 style="margin-top:20px; letter-spacing: 2px;">super_AI</h2>
+    </div>
+
+    <header>
+        <div>
+            <h1 style="font-size: 1.2rem; font-weight: 700;">super_AI</h1>
+            <p style="font-size: 0.7rem; color: #94a3b8;">Free Model Powered</p>
+        </div>
+        <button id="install-btn"><i class="fas fa-download"></i> Install</button>
+    </header>
+
+    <div id="chat-container">
+        <div class="message ai">Hello! I am <b>super_AI</b>. How can I assist you today?</div>
+    </div>
+
+    <div class="input-wrapper">
+        <input type="text" id="user-input" placeholder="Type a message..." autocomplete="off">
+        <button id="send"><i class="fas fa-paper-plane"></i></button>
+    </div>
+
+    <script>
+        // Splash Screen Removal
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash');
+                splash.style.opacity = '0';
+                splash.style.transform = 'scale(1.1)';
+                setTimeout(() => splash.remove(), 800);
+            }, 2000);
+        });
+
+        // Chat Logic
+        const container = document.getElementById('chat-container');
+        const input = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send');
+
+        async function sendMessage() {
+            const text = input.value.trim();
+            if(!text) return;
+
+            // User Message
+            addMessage(text, 'user');
+            input.value = '';
+
+            // AI Loading
+            const loadingId = 'ai-' + Date.now();
+            addMessage('<i class="fas fa-circle-notch fa-spin"></i> thinking...', 'ai', loadingId);
+
+            try {
+                // IMPORTANT: Fetching from Vercel Serverless Function to hide API Key
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+
+                const data = await response.json();
+                document.getElementById(loadingId).innerHTML = data.reply || "Error: Could not reach AI.";
+            } catch (err) {
+                document.getElementById(loadingId).innerHTML = "Offline or Server Error.";
+            }
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function addMessage(html, type, id = '') {
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            if(id) div.id = id;
+            div.innerHTML = html;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        input.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
+
+        // PWA Logic: Install Prompt
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') installBtn.style.display = 'none';
+                deferredPrompt = null;
+            }
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        // Offline Detection
+        window.addEventListener('offline', () => { document.getElementById('offline-indicator').style.display = 'block'; });
+        window.addEventListener('online', () => { document.getElementById('offline-indicator').style.display = 'none'; });
+    </script>
+</body>
+</html>
