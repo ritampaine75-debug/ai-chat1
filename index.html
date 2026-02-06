@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>super_AI</title>
     <meta name="theme-color" content="#0f172a">
+    
+    <!-- IMPORTANT: Link to Manifest -->
     <link rel="manifest" href="manifest.json">
     
     <!-- Icons & Fonts -->
@@ -43,6 +45,7 @@
         /* --- Animations --- */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        @keyframes pulse-btn { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
 
         /* --- Splash Screen --- */
         #splash {
@@ -67,11 +70,28 @@
         .brand h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; }
         .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
         
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        
         .header-actions button {
             background: transparent; border: none; color: var(--text-dim);
             font-size: 1.2rem; padding: 8px; cursor: pointer; transition: color 0.3s;
         }
         .header-actions button:hover { color: var(--primary); }
+
+        /* Install Button Specifics */
+        #header-install-btn {
+            display: none; /* Hidden by default */
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--primary);
+            font-size: 0.9rem;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            animation: pulse-btn 2s infinite;
+        }
+        #header-install-btn i { margin-right: 6px; }
+        #header-install-btn:hover { background: var(--primary); color: white; }
 
         /* --- Chat Area --- */
         #chat-box {
@@ -228,8 +248,8 @@
         
         <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
 
-        <!-- Install Button (Hidden by default) -->
-        <button id="install-btn" class="btn-full btn-outline" style="display:none">
+        <!-- Secondary Install Button (Backup) -->
+        <button id="settings-install-btn" class="btn-full btn-outline" style="display:none">
             <i class="fas fa-download"></i> Install App
         </button>
 
@@ -247,6 +267,11 @@
         <h2>super_AI</h2>
     </div>
     <div class="header-actions">
+        <!-- Main Install Button (Visible in Header) -->
+        <button id="header-install-btn" title="Install App">
+            <i class="fas fa-download"></i> Install
+        </button>
+
         <button id="open-settings" title="Settings"><i class="fas fa-cog"></i></button>
     </div>
 </header>
@@ -284,11 +309,15 @@
     const customPromptInput = document.getElementById('custom-prompt');
     const savePromptBtn = document.getElementById('save-prompt-btn');
     const clearBtn = document.getElementById('clear-btn');
-    const installBtn = document.getElementById('install-btn');
+    
+    // Install Elements
+    const headerInstallBtn = document.getElementById('header-install-btn');
+    const settingsInstallBtn = document.getElementById('settings-install-btn');
 
     // --- State Management ---
     let chatHistory = [];
     let systemPrompt = '';
+    let deferredPrompt; // For PWA install
 
     // --- Initialization ---
     window.addEventListener('load', () => {
@@ -420,7 +449,7 @@
         try {
             const payload = {
                 message: text,
-                systemPrompt: systemPrompt // Include custom instruction
+                systemPrompt: systemPrompt
             };
 
             const response = await fetch(CONFIG.apiEndpoint, {
@@ -460,26 +489,41 @@
     window.addEventListener('offline', () => document.getElementById('offline-status').style.display = 'block');
     window.addEventListener('online', () => document.getElementById('offline-status').style.display = 'none');
 
-    // --- PWA Install Logic ---
-    let deferredPrompt;
+    // --- PWA INSTALLATION LOGIC ---
     
+    // 1. Listen for the browser event
     window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Prevent automatic mini-infobar
         deferredPrompt = e;
-        installBtn.style.display = 'flex'; // Show button in settings
+        
+        // Show the buttons
+        headerInstallBtn.style.display = 'flex';
+        settingsInstallBtn.style.display = 'flex';
     });
 
-    installBtn.addEventListener('click', async () => {
+    // 2. Define install function
+    async function installApp() {
         if (deferredPrompt) {
             deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
             deferredPrompt = null;
-            installBtn.style.display = 'none';
-            settingsModal.classList.remove('active');
+            
+            // Hide buttons after prompt interaction
+            headerInstallBtn.style.display = 'none';
+            settingsInstallBtn.style.display = 'none';
         }
-    });
+    }
 
+    // 3. Attach listeners
+    headerInstallBtn.addEventListener('click', installApp);
+    settingsInstallBtn.addEventListener('click', installApp);
+
+    // 4. Register Service Worker (Required for PWA)
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(console.error);
+        navigator.serviceWorker.register('sw.js')
+            .then(() => console.log('Service Worker Registered'))
+            .catch(err => console.error('SW Error:', err));
     }
 </script>
 </body>
